@@ -13,60 +13,81 @@ class ExampleTwo extends StatefulWidget {
 }
 
 class _ExampleTwoState extends State<ExampleTwo> {
-  List<Photos> photosList = [];
-  Future<List<Photos>> getPhotos() async {
-    final response = await http
-        .get(Uri.parse('https://jsonplaceholder.typicode.com/photos'));
-    var data = jsonDecode(response.body.toString());
+  var data;
+  Future<void> getUserApi() async {
+    final response =
+        await http.get(Uri.parse('https://jsonplaceholder.typicode.com/users'));
     if (response.statusCode == 200) {
-      for (Map i in data) {
-        Photos photos = Photos(title: i['title'], url: i['url'], id: i['id']);
-        photosList.add(photos);
-      }
-      return photosList;
-    } else {
-      return photosList;
-    }
+      data = jsonDecode(response.body.toString());
+    } else {}
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('API Course, example two'),
+        title: const Text('API Course, example four'),
         centerTitle: true,
       ),
       body: Column(
         children: [
           Expanded(
-            child: FutureBuilder(
-                future: getPhotos(),
-                builder: (context, AsyncSnapshot<List<Photos>> snapshot) {
-                  return ListView.builder(
-                      itemCount: photosList.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: NetworkImage(
-                                snapshot.data![index].url.toString()),
-                          ),
-                          subtitle:
-                              Text(snapshot.data![index].title.toString()),
-                          title: Text('Notes id:' +
-                              snapshot.data![index].id.toString()),
-                        );
-                      });
-                }),
-          )
+              child: FutureBuilder(
+                  future: getUserApi(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Text('Loading');
+                    } else {
+                      return ListView.builder(
+                          itemCount: data.length,
+                          itemBuilder: (context, index) {
+                            return Card(
+                              child: Column(
+                                children: [
+                                  reUsableRow(
+                                    title: 'Name',
+                                    value: data[index]['name'].toString(),
+                                  ),
+                                  reUsableRow(
+                                    title: 'Username',
+                                    value: data[index]['username'].toString(),
+                                  ),
+                                  reUsableRow(
+                                    title: 'Email',
+                                    value: data[index]['email'].toString(),
+                                  ),
+                                  reUsableRow(
+                                    title: 'Address',
+                                    value: data[index]['address']['street']
+                                        .toString(),
+                                  ),
+                                ],
+                              ),
+                            );
+                          });
+                    }
+                  }))
         ],
       ),
     );
   }
 }
 
-class Photos {
-  String title, url;
-  int id;
-
-  Photos({required this.title, required this.url, required this.id});
+class reUsableRow extends StatelessWidget {
+  reUsableRow({Key? key, required this.title, required this.value})
+      : super(key: key);
+  String title, value;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title),
+          Text(value),
+        ],
+      ),
+    );
+  }
 }
